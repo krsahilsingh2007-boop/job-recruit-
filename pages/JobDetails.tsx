@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Job, User } from '../types';
 import { db } from '../databaseService';
-import { COLORS } from '../constants';
 
 interface JobDetailsProps {
   user: User | null;
@@ -96,18 +95,13 @@ const JobDetails: React.FC<JobDetailsProps> = ({ user, onUpdateUser }) => {
   const handleShare = async () => {
     let shareUrl = window.location.href;
     
-    // Normalize and validate URL for share API
     try {
+      // Normalize URL for standard browsers
       const urlObj = new URL(shareUrl);
-      // navigator.share often requires absolute URLs with standard protocols
       if (!['http:', 'https:'].includes(urlObj.protocol)) {
-        // Construct a clean URL from origin if current location.href is restricted (e.g. data URLs or local files)
         shareUrl = `${window.location.origin}${window.location.pathname}${window.location.hash}`;
-      } else {
-        shareUrl = urlObj.toString();
       }
     } catch (e) {
-      // Fallback construction
       shareUrl = `${window.location.origin}${window.location.pathname}${window.location.hash}`;
     }
 
@@ -118,14 +112,12 @@ const JobDetails: React.FC<JobDetailsProps> = ({ user, onUpdateUser }) => {
     };
 
     try {
-      // Check if browser supports share and can handle the specific data
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
         throw new Error("Share not available");
       }
     } catch (err) {
-      // Fallback to clipboard for a seamless user experience
       try {
         await navigator.clipboard.writeText(shareUrl);
         setShareFeedback("Link copied to clipboard!");
@@ -171,7 +163,6 @@ const JobDetails: React.FC<JobDetailsProps> = ({ user, onUpdateUser }) => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-12 shadow-sm">
               <div className="flex flex-col md:flex-row items-start gap-8 mb-10">
@@ -238,7 +229,6 @@ const JobDetails: React.FC<JobDetailsProps> = ({ user, onUpdateUser }) => {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-1">
              <div className="sticky top-24 space-y-6">
                 <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm">

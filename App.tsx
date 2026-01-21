@@ -13,23 +13,40 @@ import RecruiterDashboard from './pages/RecruiterDashboard';
 import Services from './pages/Services';
 import Blogs from './pages/Blogs';
 import { User, Job } from './types';
-import { MOCK_JOBS } from './constants';
+import { db } from './databaseService';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const [jobs, setJobs] = useState<Job[]>(() => {
-    const saved = localStorage.getItem('jobs');
-    return saved ? JSON.parse(saved) : MOCK_JOBS;
-  });
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [appliedJobs, setAppliedJobs] = useState<string[]>(() => {
-    const saved = localStorage.getItem('appliedJobs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  useEffect(() => {
+    const loadAppData = async () => {
+      try {
+        const allJobs = await db.jobs.find();
+        setJobs(allJobs);
+        
+        if (user) {
+          const userApps = await db.applications.find({ candidateId: user.id });
+          setAppliedJobs(userApps.map(app => app.jobId));
+        }
+      } catch (err) {
+        console.error("Failed to load initial app data", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAppData();
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -39,29 +56,26 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('jobs', JSON.stringify(jobs));
-  }, [jobs]);
-
-  useEffect(() => {
-    localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
-  }, [appliedJobs]);
-
-  const handleApply = (jobId: string) => {
-    if (!user) return;
-    if (!appliedJobs.includes(jobId)) {
-      setAppliedJobs([...appliedJobs, jobId]);
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, applicantsCount: j.applicantsCount + 1 } : j));
-    }
-  };
-
-  const handlePostJob = (newJob: Job) => {
-    setJobs([newJob, ...jobs]);
+  const handlePostJob = async (newJob: Job) => {
+    // In a real app, this would be an insert into the DB
+    // For now we just update local state to reflect the change
+    setJobs(prev => [newJob, ...prev]);
   };
 
   const handleUpdateUser = (updatedUser: User) => {
     setUser(updatedUser);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">JobPortal</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Router>
@@ -97,7 +111,6 @@ const App: React.FC = () => {
           </Routes>
         </main>
         
-        {/* Global AI Career Assistant */}
         <AiAssistant />
 
         <footer className="bg-slate-900 text-slate-400 py-10 mt-12">
