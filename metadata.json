@@ -1,0 +1,7 @@
+{
+  "name": "Naukri-Clone High-Fidelity Job Portal",
+  "description": "A robust job portal with distinct Candidate and Recruiter experiences, featuring AI-powered job descriptions and resume tips.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
